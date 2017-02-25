@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">PhotoOverlay</string>
+
+    <!-- Overlay dialog -->
+    <string name="dialog.title">Choose your overlay:</string>
+    <string name="dialog.moustache">Moustache</string>
+    <string name="dialog.hat">Hat</string>
+    <string name="dialog.glasses">Glasses</string>
+    <string name="dialog.gallery">Choose from gallery</string>
+    <string name="dialog.positive">OK</string>
+    <string name="dialog.negative">Cancel</string>
+</resources>
