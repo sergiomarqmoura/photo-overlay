@@ -8,7 +8,6 @@ import android.widget.BaseAdapter
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.elem_gallery_photo.view.*
 import sergiomoura.com.photooverlay.R
-import java.io.File
 import java.util.*
 
 /**
@@ -28,7 +27,7 @@ class GalleryAdapter(private val context: Context,
         val photoDimension = context.resources.getDimensionPixelSize(R.dimen.gallery_photo_width)
         return inflater.inflate(R.layout.elem_gallery_photo, null).apply {
             with(photo) {
-                picasso.load(File(photoPath))
+                picasso.load(photoPath)
                         .resize(photoDimension, photoDimension)
                         .centerCrop()
                         .into(this)

@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_gallery.*
 import sergiomoura.com.photooverlay.R
+import sergiomoura.com.photooverlay.common.FullscreenPhotoActivity
 import java.util.*
 
 class GalleryActivity : AppCompatActivity() {
@@ -14,7 +15,7 @@ class GalleryActivity : AppCompatActivity() {
 
     private val photoClickListener = object : PhotoClickListener {
         override fun onPhotoClick(path: String) {
-
+            FullscreenPhotoActivity.start(this@GalleryActivity, path)
         }
     }
 
@@ -32,7 +33,7 @@ class GalleryActivity : AppCompatActivity() {
 
     companion object {
         const val PHOTOS_LIST_EXTRA = "PHOTOS_LIST"
-        fun start(context: Context, pictures: List<String>) {
+        fun start(context: Context, pictures: List<String?>) {
             val intent = Intent(context, GalleryActivity::class.java)
             intent.putStringArrayListExtra(PHOTOS_LIST_EXTRA, ArrayList(pictures))
             context.startActivity(intent)

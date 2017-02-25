@@ -15,12 +15,13 @@ class PhotoManager {
 
     companion object {
         private const val PHOTO_OVERLAY_IMAGE_STORAGE_PREFIX = "photo_overlay_"
+        private const val FILE_URI_PREFIX = "file:"
         private const val DEFAULT_IMAGE_QUALITY = 90
     }
 
     private val matrix by lazy { Matrix() }
 
-    fun savePicture(cameraBitmap: Bitmap, overlaysBitmap: Bitmap): Observable<File?> {
+    fun savePicture(cameraBitmap: Bitmap, overlaysBitmap: Bitmap): Observable<String?> {
         val finalBitmap = overlay(cameraBitmap, overlaysBitmap)
         val filename = "$PHOTO_OVERLAY_IMAGE_STORAGE_PREFIX${Calendar.getInstance().timeInMillis}"
         var out: FileOutputStream? = null
@@ -44,14 +45,17 @@ class PhotoManager {
                 e.printStackTrace()
             }
         }
-        return Observable.just(myFile)
+        return Observable.just(myFile.toUri())
     }
 
-    fun getAllPictures(): Observable<File> {
+    private fun File?.toUri() = this?.let { "$FILE_URI_PREFIX$path" } ?: null
+
+    fun getAllPictures(): Observable<String?> {
         val storage = File(Environment.getExternalStorageDirectory().toString())
         return Observable.from(storage.listFiles { file, string ->
             string.startsWith(PHOTO_OVERLAY_IMAGE_STORAGE_PREFIX)
-        })
+        }
+                .map { it.toUri() })
     }
 
     private fun overlay(bmp1: Bitmap, bmp2: Bitmap): Bitmap {

@@ -1,6 +1,8 @@
 package sergiomoura.com.photooverlaylib.view
 
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.SurfaceTexture
@@ -9,6 +11,7 @@ import android.graphics.drawable.Drawable
 import android.hardware.camera2.*
 import android.os.Handler
 import android.os.HandlerThread
+import android.provider.MediaStore
 import android.support.annotation.DrawableRes
 import android.support.annotation.NonNull
 import android.support.v4.content.ContextCompat
@@ -20,10 +23,10 @@ import android.widget.ImageView
 import android.widget.Toast
 import kotlinx.android.synthetic.main.photo_overlay_view.view.*
 import sergiomoura.com.photooverlaylib.R
-import sergiomoura.com.photooverlaylib.overlay.Overlay
+import sergiomoura.com.photooverlaylib.overlay.GalleryOverlay
+import sergiomoura.com.photooverlaylib.overlay.ResourceOverlay
 import sergiomoura.com.photooverlaylib.photo.PictureAvailabilityListener
 import sergiomoura.com.photooverlaylib.photo.PicturesListener
-import java.io.File
 import java.util.*
 
 class PhotoOverlayView : FrameLayout, PhotoOverlayPresenter.View {
@@ -78,17 +81,27 @@ class PhotoOverlayView : FrameLayout, PhotoOverlayPresenter.View {
         }
     }
 
-    fun addOverlay(overlay: Overlay) {
+    fun addResourceOverlay(overlay: ResourceOverlay) {
+        val drawable = ContextCompat.getDrawable(context, overlay.resource)
+        val overlayImage = createOverlayImage(drawable)
+        currentOverlays.add(overlayImage)
+        addView(overlayImage)
+    }
+
+    fun addGalleryOverlay(overlay: GalleryOverlay) {
         overlay.resource?.let {
-            val overlayImage = createOverlayImage(it)
-            currentOverlays.add(overlayImage)
-            addView(overlayImage)
+            val drawable = presenter.getDrawableFromUri(context.contentResolver, it)
+            drawable?.let {
+                val overlayImage = createOverlayImage(it)
+                currentOverlays.add(overlayImage)
+                addView(overlayImage)
+            }
         }
     }
 
-    private fun createOverlayImage(@DrawableRes resource: Int): ImageView {
+    private fun createOverlayImage(resource: Drawable): ImageView {
         return ImageView(context).apply {
-            setImageDrawable(resizeDrawable(ContextCompat.getDrawable(context, resource)))
+            setImageDrawable(resizeDrawable(resource))
             val imageViewParams = ViewGroup.MarginLayoutParams(
                     ViewGroup.MarginLayoutParams.WRAP_CONTENT,
                     ViewGroup.MarginLayoutParams.WRAP_CONTENT)
@@ -114,7 +127,7 @@ class PhotoOverlayView : FrameLayout, PhotoOverlayPresenter.View {
         presenter.getTakenPictures()
     }
 
-    override fun setTakenPictures(pictures: List<String>) {
+    override fun setTakenPictures(pictures: List<String?>) {
         picturesListener?.onPicturesAvailable(pictures)
     }
 
@@ -137,7 +150,12 @@ class PhotoOverlayView : FrameLayout, PhotoOverlayPresenter.View {
         presenter.takePicture(cameraImage, overlaysImage)
     }
 
-    override fun setPicture(picture: File?) {
+    fun launchGallery(context: Activity) {
+        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        context.startActivityForResult(intent, GALLERY_REQUEST_CODE)
+    }
+
+    override fun setPicture(picture: String?) {
         pictureAvailabilityListener?.onPictureReady(picture)
     }
 
@@ -265,5 +283,6 @@ class PhotoOverlayView : FrameLayout, PhotoOverlayPresenter.View {
     companion object {
         private const val DEFAULT_OVERLAY_WIDTH = 450
         private const val DEFAULT_OVERLAY_HEIGHT = 450
+        const val GALLERY_REQUEST_CODE = 21
     }
 }

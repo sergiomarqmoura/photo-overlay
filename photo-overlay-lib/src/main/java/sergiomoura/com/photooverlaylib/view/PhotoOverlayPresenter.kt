@@ -1,13 +1,16 @@
 package sergiomoura.com.photooverlaylib.view
 
+import android.content.ContentResolver
 import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.util.Log
 import rx.Observer
 import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
 import rx.subscriptions.CompositeSubscription
 import sergiomoura.com.photooverlaylib.photo.PhotoManager
-import java.io.File
+import java.io.FileNotFoundException
 
 internal class PhotoOverlayPresenter {
 
@@ -23,17 +26,16 @@ internal class PhotoOverlayPresenter {
 
     fun getTakenPictures() {
         subscriptions.add(photoManager.getAllPictures()
-                .map { it.path }
                 .toList()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : Observer<List<String>> {
+                .subscribe(object : Observer<List<String?>> {
                     override fun onError(e: Throwable) {
                         Log.e("PhotoOverlayPresenter", "Error fetching saved pictures: ${e.message}")
                         view.setPicture(null)
                     }
 
-                    override fun onNext(pictures: List<String>) {
+                    override fun onNext(pictures: List<String?>) {
                         view.setTakenPictures(pictures)
                     }
 
@@ -44,17 +46,26 @@ internal class PhotoOverlayPresenter {
 
     }
 
+    fun getDrawableFromUri(contentResolver: ContentResolver, photoUri: Uri): Drawable? {
+        try {
+            val inputStream = contentResolver.openInputStream(photoUri)
+            return Drawable.createFromStream(inputStream, photoUri.toString())
+        } catch (e: FileNotFoundException) {
+            return null
+        }
+    }
+
     fun takePicture(cameraBitmap: Bitmap, overlaysBitmap: Bitmap) {
         subscriptions.add(photoManager.savePicture(cameraBitmap, overlaysBitmap)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(object : Observer<File?> {
+                .subscribe(object : Observer<String?> {
                     override fun onError(e: Throwable) {
                         Log.e("PhotoOverlayPresenter", "Error saving picture: ${e.message}")
                         view.setPicture(null)
                     }
 
-                    override fun onNext(picture: File?) {
+                    override fun onNext(picture: String?) {
                         view.setPicture(picture)
                     }
 
@@ -69,7 +80,7 @@ internal class PhotoOverlayPresenter {
     }
 
     interface View {
-        fun setPicture(picture: File?)
-        fun setTakenPictures(pictures: List<String>)
+        fun setPicture(picture: String?)
+        fun setTakenPictures(pictures: List<String?>)
     }
 }
