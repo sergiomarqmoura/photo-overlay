@@ -75,24 +75,22 @@ class CameraInteractor {
     }
 
     fun closeCamera() {
-        if (isCameraOpen()) {
-            stopBackgroundThread()
-            cameraDevice?.let {
-                it.close()
-                cameraDevice = null
-            }
+        stopBackgroundThread()
+        cameraDevice?.let {
+            it.close()
+            cameraDevice = null
         }
     }
 
     private fun isCameraOpen() = backgroundThread != null
 
     fun openCamera(context: Context, surfaceTexture: SurfaceTexture, width: Int, height: Int) {
-            this.surfaceTexture = surfaceTexture
-            surfaceViewWidth = width
-            surfaceViewHeight = height
+        this.surfaceTexture = surfaceTexture
+        surfaceViewWidth = width
+        surfaceViewHeight = height
 
-            startBackgroundThread()
-            launchCamera(context)
+        startBackgroundThread()
+        launchCamera(context)
     }
 
     private fun updatePreview() {

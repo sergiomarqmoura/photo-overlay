@@ -10,6 +10,10 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.util.*
 
+/**
+ * This class holds the behavior to save the library's photos to the disk and to fetch
+ * previously saved photos
+ */
 open class PhotoManager {
 
     companion object {

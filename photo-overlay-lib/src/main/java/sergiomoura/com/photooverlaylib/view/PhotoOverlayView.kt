@@ -185,7 +185,6 @@ class PhotoOverlayView : FrameLayout, PhotoOverlayPresenter.View {
 
     fun closeCamera() {
         cameraInteractor.closeCamera()
-        preview.surfaceTextureListener = null
     }
 
     companion object {
