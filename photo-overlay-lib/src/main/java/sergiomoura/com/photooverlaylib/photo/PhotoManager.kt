@@ -4,14 +4,13 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Matrix
 import android.os.Environment
-import android.util.Log
 import rx.Observable
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.util.*
 
-class PhotoManager {
+open class PhotoManager {
 
     companion object {
         private const val PHOTO_OVERLAY_IMAGE_STORAGE_PREFIX = "photo_overlay_"
@@ -21,7 +20,7 @@ class PhotoManager {
 
     private val matrix by lazy { Matrix() }
 
-    fun savePicture(cameraBitmap: Bitmap, overlaysBitmap: Bitmap): Observable<String?> {
+    open fun savePicture(cameraBitmap: Bitmap, overlaysBitmap: Bitmap): Observable<String?> {
         val finalBitmap = overlay(cameraBitmap, overlaysBitmap)
         val filename = "$PHOTO_OVERLAY_IMAGE_STORAGE_PREFIX${Calendar.getInstance().timeInMillis}"
         var out: FileOutputStream? = null
@@ -36,7 +35,6 @@ class PhotoManager {
             e.printStackTrace()
         } finally {
             try {
-                Log.d("Saved the bitmap!", "Saved!")
                 out?.close()
                 cameraBitmap.recycle()
                 overlaysBitmap.recycle()
@@ -50,7 +48,7 @@ class PhotoManager {
 
     private fun File?.toUri() = this?.let { "$FILE_URI_PREFIX$path" } ?: null
 
-    fun getAllPictures(): Observable<String?> {
+    open fun getAllPictures(): Observable<String?> {
         val storage = File(Environment.getExternalStorageDirectory().toString())
         return Observable.from(storage.listFiles { file, string ->
             string.startsWith(PHOTO_OVERLAY_IMAGE_STORAGE_PREFIX)

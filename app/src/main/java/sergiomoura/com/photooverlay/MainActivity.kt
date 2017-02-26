@@ -1,14 +1,16 @@
 package sergiomoura.com.photooverlay
 
 import android.app.Activity
-import android.app.Instrumentation
 import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import com.afollestad.materialdialogs.MaterialDialog
+import com.jakewharton.rxbinding.widget.RxCompoundButton
 import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.activity_main.*
 import sergiomoura.com.photooverlay.common.FullscreenPhotoActivity
+import sergiomoura.com.photooverlay.common.permissions.RuntimePermissionsManager
 import sergiomoura.com.photooverlay.gallery.GalleryActivity
 import sergiomoura.com.photooverlaylib.overlay.GalleryOverlay
 import sergiomoura.com.photooverlaylib.overlay.Overlay
@@ -22,17 +24,27 @@ class MainActivity : AppCompatActivity() {
     private lateinit var overlayDialog: MaterialDialog
     private var possibleOverlays = listOf<Overlay>()
 
+    private val runtimePermissionsManager by lazy { RuntimePermissionsManager(this) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
 
+        setContentView(R.layout.activity_main)
         setupViews()
+
+        runtimePermissionsManager.requestCameraAndStoragePermissions()
     }
 
     private fun setupViews() {
-        toggleCameraStatus.setOnClickListener {
-            photoOverlayView.toggleCameraStatus()
-        }
+        RxCompoundButton.checkedChanges(toggleCameraStatus)
+                .skip(1)
+                .subscribe({ isChecked ->
+                    if (isChecked) {
+                        photoOverlayView.openCamera()
+                    } else {
+                        photoOverlayView.closeCamera()
+                    }
+                }, { Log.e("Error: ", "error: ${it.message}") })
 
         addOverlay.setOnClickListener {
             launchOverlayDialog()
@@ -51,6 +63,10 @@ class MainActivity : AppCompatActivity() {
 
                     takenPhoto.setOnClickListener { FullscreenPhotoActivity.start(this@MainActivity, picture) }
                 }
+
+                override fun onErrorSavingPicture() {
+                    // empty
+                }
             })
         }
 
@@ -58,6 +74,10 @@ class MainActivity : AppCompatActivity() {
             photoOverlayView.getTakenPictures(object : PicturesListener {
                 override fun onPicturesAvailable(pictures: List<String?>) {
                     GalleryActivity.start(this@MainActivity, pictures)
+                }
+
+                override fun onErrorFetchingPictures() {
+                    // empty
                 }
             })
         }
@@ -94,6 +114,22 @@ class MainActivity : AppCompatActivity() {
                     photoOverlayView.addGalleryOverlay(GalleryOverlay(imageUri))
                 }
             }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        when (requestCode) {
+            RuntimePermissionsManager.PERMISSIONS_REQUEST_STORAGE_CAMERA -> {
+                if (RuntimePermissionsManager.allPermissionsGranted(grantResults)) {
+                    if (toggleCameraStatus.isChecked) {
+                        photoOverlayView.openCamera()
+                    }
+                } else {
+                    finish()
+                }
+            }
+        }
     }
 
     private fun launchOverlayDialog() {
